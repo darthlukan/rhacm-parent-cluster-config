@@ -1,0 +1,124 @@
+apiVersion: hive.openshift.io/v1
+kind: ClusterDeployment
+metadata:
+  name: aws-child-cluster
+  namespace: aws-child-cluster-namespace
+  labels:
+    cloud: 'AWS'
+    region: 'us-west-1'
+    vendor: 'OpenShift'
+spec:
+  baseDomain:
+  clusterName: aws-child-cluster
+  controlPlaneConfig:
+    servingCertificates: {}
+  installed: false
+  platform:
+    aws:
+      credentialsSecretRef:
+        name: aws-child-cluster-aws-creds
+      region: us-west-1
+  provisioning:
+    installConfigSecretRef:
+      name: aws-child-cluster-install-config
+    sshPrivateKeySecretRef:
+      name: aws-child-cluster-ssh-private-key
+    imageSetRef:
+       #quay.io/openshift-release-dev/ocp-release:4.5.2-x86_64
+      name: img4.5.2-x86-64
+  pullSecretRef:
+    name: aws-child-cluster-pull-secret
+---
+apiVersion: cluster.open-cluster-management.io/v1
+kind: ManagedCluster
+metadata:
+  labels:
+    cloud: Amazon
+    name: aws-connection 
+    vendor: OpenShift
+  name: aws-connection 
+spec:
+  hubAcceptsClient: true
+---
+apiVersion: hive.openshift.io/v1
+kind: MachinePool
+metadata:
+  name: aws-child-cluster-worker
+  namespace: aws-child-cluster-namespace 
+spec:
+  clusterDeploymentRef:
+    name: aws-child-cluster
+  name: worker
+  platform:
+    aws:
+      rootVolume:
+        iops: 100
+        size: 100
+        type: gp2
+      type: m5.xlarge
+  replicas: 3
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: brian-aws-empty-pull-secret
+  namespace: brian-aws-empty
+stringData:
+  .dockerconfigjson: |-
+    {"auths":{"SNIP"}}
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-child-cluster-install-config
+  namespace: aws-child-cluster-namespace 
+type: Opaque
+data:
+  # Base64 encoding of install-config yaml
+  install-config.yaml: SNIP
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-child-cluster-ssh-private-key
+  namespace: aws-child-cluster-namespace 
+stringData:
+  ssh-privatekey: |-
+    -----BEGIN OPENSSH PRIVATE KEY-----
+    SNIP
+    -----END OPENSSH PRIVATE KEY-----
+type: Opaque
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: aws-child-cluster-aws-creds
+  namespace: aws-child-cluster-namespace
+stringData:
+  aws_access_key_id: FOO
+  aws_secret_access_key: BAR
+---
+apiVersion: agent.open-cluster-management.io/v1
+kind: KlusterletAddonConfig
+metadata:
+  name: aws-child-cluster 
+  namespace: aws-child-cluster-namespace
+spec:
+  clusterName: aws-child-cluster
+  clusterNamespace: aws-child-cluster-namespace
+  clusterLabels:
+    cloud: Amazon
+    vendor: OpenShift
+  applicationManager:
+    enabled: true
+  policyController:
+    enabled: true
+  searchCollector:
+    enabled: true
+  certPolicyController:
+    enabled: true
+  iamPolicyController:
+    enabled: true
+  version: "2.0"
