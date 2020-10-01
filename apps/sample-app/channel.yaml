@@ -1,0 +1,12 @@
+apiVersion: apps.open-cluster-management.io/v1
+kind: Channel
+metadata:
+  labels:
+    app: sample-app
+  name: sample-app
+  namespace: sample-app
+spec:
+  gates: {}
+  pathname: 'https://github.com/darthlukan/rhacm-sample-app-config.git'
+  type: git
+

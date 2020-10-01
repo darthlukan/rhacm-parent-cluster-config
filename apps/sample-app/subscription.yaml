@@ -1,0 +1,14 @@
+apiVersion: apps.open-cluster-management.io/v1
+kind: Subscription
+metadata:
+  labels:
+    app: sample-app
+  name: sample-app
+  namespace: sample-app
+spec:
+  channel: sample-app/sample-app
+  placement:
+    local: false
+    placementRef:
+      kind: PlacementRule
+      name: sample-app
